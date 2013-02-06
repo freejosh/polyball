@@ -86,6 +86,13 @@ function recenterTouches() {
 }
 
 function addTouch(touch, recenter) {
+	var circle = r.circle(touch.pageX, touch.pageY, 20);
+	circle.attr({
+		'stroke-width': 0,
+		fill: 'black',
+		'fill-opacity': 0.2
+	});
+	touch.circle = circle;
 	touchesById[touch.identifier] = touch;
 	
 	var i;
@@ -106,12 +113,20 @@ function removeTouch(id, recenter) {
 	}
 
 	var touch = touchesById[id];
+	touch.circle.remove();
 	delete touchesById[id];
 	if (recenter !== false) recenterTouches();
 	return touch;
 }
 
 function moveTouch(touch) {
+	var oldTouch = touchesById[touch.identifier];
+		
+	touch.circle = oldTouch.circle;
+	touch.circle.attr({
+		cx: touch.pageX,
+		cy: touch.pageY
+	});
 	removeTouch(touch.identifier, false);
 	addTouch(touch, false);
 	recenterTouches();
@@ -123,7 +138,6 @@ function handleStart(evt) {
 	var touches = evt.changedTouches;
 	for (var i = 0; i < touches.length; i++) {
 		var touch = touches[i];
-		touch.circle = r.circle(touch.pageX, touch.pageY, 10);
 		addTouch(touch);
 	}
 }
@@ -132,18 +146,9 @@ function handleMove(evt) {
 	evt.preventDefault();
 	var touches = evt.changedTouches;
 	var touch;
-	var oldTouch;
 
 	for (var i = 0; i < touches.length; i++) {
 		touch = touches[i];
-		oldTouch = touchesById[touch.identifier];
-		
-		touch.circle = oldTouch.circle;
-		touch.circle.attr({
-			cx: touch.pageX,
-			cy: touch.pageY
-		});
-		
 		moveTouch(touch);
 	}
 }
@@ -153,7 +158,7 @@ function handleEnd(evt) {
 	var touches = evt.changedTouches;
 
 	for (var i = 0; i < touches.length; i++) {
-		removeTouch(touches[i].identifier).circle.remove();
+		removeTouch(touches[i].identifier);
 	}
 }
 
