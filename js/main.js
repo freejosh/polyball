@@ -15,6 +15,57 @@ undef: true
 var touchesById = {};
 var sortedTouches = [];
 var touchCenter = { x: null, y: null };
+var userPoly = null;
+
+function refreshUserPoly() {
+	var numTouches = sortedTouches.length;
+
+	if (numTouches < 2) {
+		if (userPoly !== null) {
+			userPoly.remove();
+			userPoly = null;
+		}
+		return;
+	}
+
+	if (userPoly === null) {
+		userPoly = r.path();
+		userPoly.attr({
+			stroke: 'black',
+			'stroke-opacity': 0.1,
+			'stroke-dasharray': '-',
+			'stroke-linecap': 'round',
+			'stroke-linejoin': 'round',
+			'stroke-width': 5
+		});
+	}
+
+	var pathString = '';
+	var touch;
+	var x;
+	var y;
+	for (var i = 0; i < numTouches; i++) {
+		touch = sortedTouches[i];
+		x = touch.pageX;
+		y = touch.pageY;
+
+		if (i === 0) {
+			pathString += 'M';
+		} else {
+			pathString += 'L';
+		}
+
+		pathString += x + ',' + y;
+	}
+	pathString += 'Z';
+
+	userPoly.attr('path', pathString);
+
+	console.log('');
+	for (i = 0; i < sortedTouches.length; i++) {
+		console.log(sortedTouches[i].identifier);
+	}
+}
 
 /**
  * Determine whether one point should be before or after another when ordering clockwise.
@@ -38,19 +89,23 @@ function compareTouches(a, b) {
 	var cx = touchCenter.x;
 	var cy = touchCenter.y;
 
+	// center of points will be center of coordinates
+	ax = ax - cx;
+	ay = ay - cy;
+	bx = bx - cx;
+	by = by - cy;
+
 	if (ax >= 0 && bx < 0) return true;
 	if (ax === 0 && bx === 0) return ay > by;
 
 	// compute the cross product of vectors (center -> a) x (center -> b)
-	var det = (ax - cx) * (by - cy) - (bx - cx) * (ay - cy);
+	var det = ax * by - bx * ay;
 	if (det < 0) return true;
 	if (det > 0) return false;
 
 	// points a and b are on the same line from the center
 	// check which point is closer to the center
-	var d1 = (ax - cx) * (ax - cx) + (ay - cy) * (ay - cy);
-	var d2 = (bx - cx) * (bx - cx) + (by - cy) * (by - cy);
-	return d1 > d2;
+	return (ax * ax + ay * ay) > (bx * bx + by * by);
 }
 
 function recenterTouches() {
@@ -94,14 +149,13 @@ function addTouch(touch, recenter) {
 	});
 	touch.circle = circle;
 	touchesById[touch.identifier] = touch;
+	sortedTouches.splice(0, 0, touch);
 	
-	var i;
-	for (i = 0; i < sortedTouches.length; i++) {
-		if (compareTouches(touch, sortedTouches[i])) break;
-	}
-
-	sortedTouches.splice(i, 0, touch);
 	if (recenter !== false) recenterTouches();
+
+	sortedTouches.sort(compareTouches);
+
+	refreshUserPoly();
 }
 
 function removeTouch(id, recenter) {
@@ -111,11 +165,12 @@ function removeTouch(id, recenter) {
 			break;
 		}
 	}
-
 	var touch = touchesById[id];
 	touch.circle.remove();
 	delete touchesById[id];
 	if (recenter !== false) recenterTouches();
+	refreshUserPoly();
+	
 	return touch;
 }
 
@@ -128,8 +183,7 @@ function moveTouch(touch) {
 		cy: touch.pageY
 	});
 	removeTouch(touch.identifier, false);
-	addTouch(touch, false);
-	recenterTouches();
+	addTouch(touch);
 }
 
 function handleStart(evt) {
