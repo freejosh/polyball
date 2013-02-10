@@ -14,7 +14,7 @@ undef: true
 
 var touchesById = {};
 var sortedTouches = [];
-var touchCenter = { x: null, y: null };
+var touchCenter = { pageX: null, pageY: null };
 var userPoly = null;
 
 function refreshUserPoly() {
@@ -71,11 +71,11 @@ function refreshUserPoly() {
  * Determine whether one point should be before or after another when ordering clockwise.
  *
  * @param {Object} a Point a.
- * @param {Integer} a.x X coordinate of a.
- * @param {Integer} a.y Y coordinate of a.
+ * @param {Integer} a.pageX X coordinate of a.
+ * @param {Integer} a.pageY Y coordinate of a.
  * @param {Object} b Point b.
- * @param {Integer} b.x X coordinate of b.
- * @param {Integer} b.y Y coordinate of b.
+ * @param {Integer} b.pageX X coordinate of b.
+ * @param {Integer} b.pageY Y coordinate of b.
  *
  * @return {Boolean} False if a should come before b, true otherwise.
  *
@@ -86,8 +86,8 @@ function compareTouches(a, b) {
 	var ay = a.pageY;
 	var bx = b.pageX;
 	var by = b.pageY;
-	var cx = touchCenter.x;
-	var cy = touchCenter.y;
+	var cx = touchCenter.pageX;
+	var cy = touchCenter.pageY;
 
 	// center of points will be center of coordinates
 	ax = ax - cx;
@@ -115,15 +115,15 @@ function recenterTouches() {
 	var touch;
 
 	if (numTouches === 0) {
-		touchCenter.x = null;
-		touchCenter.y = null;
+		touchCenter.pageX = null;
+		touchCenter.pageY = null;
 		return;
 	}
 
 	if (numTouches === 1) {
 		touch = sortedTouches[0];
-		touchCenter.x = touch.pageX;
-		touchCenter.y = touch.pageY;
+		touchCenter.pageX = touch.pageX;
+		touchCenter.pageY = touch.pageY;
 		return;
 	}
 
@@ -136,8 +136,8 @@ function recenterTouches() {
 	avgX /= numTouches;
 	avgY /= numTouches;
 
-	touchCenter.x = avgX;
-	touchCenter.y = avgY;
+	touchCenter.pageX = avgX;
+	touchCenter.pageY = avgY;
 }
 
 function addTouch(touch, recenter) {
