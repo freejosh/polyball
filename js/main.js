@@ -317,4 +317,36 @@ Raphael(function() {
 	el.addEventListener('touchend', handleEnd, false);
 	el.addEventListener('touchcancel', handleEnd, false);
 	el.addEventListener('touchmove', handleMove, false);
+
+	// Debug buttons
+	document.getElementById('randomTouches').addEventListener('click', debugRandomTouches, false);
+	document.getElementById('removeTouches').addEventListener('click', debugRemoveTouches, false);
 });
+
+// Debug functions
+
+var debugTouchEvent;
+
+function debugRandomTouches() {
+	var x, y;
+	debugTouchEvent = {
+		preventDefault: function(){},
+		changedTouches: []
+	};
+	for (var i = 0; i < Math.floor(Math.random() * 11); i++) {
+		x = Math.floor(Math.random() * 701);
+		y = Math.floor(Math.random() * 701);
+
+		debugTouchEvent.changedTouches.push({
+			identifier: i + 100,
+			pageX: x,
+			pageY: y
+		});
+	}
+
+	handleStart(debugTouchEvent);
+}
+
+function debugRemoveTouches() {
+	handleEnd(debugTouchEvent);
+}
