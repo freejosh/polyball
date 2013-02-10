@@ -20,7 +20,7 @@ var userPoly = null;
 function refreshUserPoly() {
 	var numTouches = sortedTouches.length;
 
-	if (numTouches < 2) {
+	if (numTouches <= 2) {
 		if (userPoly !== null) {
 			userPoly.remove();
 			userPoly = null;
