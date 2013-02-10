@@ -12,11 +12,16 @@ unused: true,
 undef: true
 */
 
+var r;
 var touchesById = {};
 var sortedTouches = [];
 var touchCenter = { pageX: null, pageY: null };
 var userPoly = null;
 
+/**
+ * Refreshes path, adds, or removes `userPoly` based on touches in
+ * `sortedTouches`.
+ */
 function refreshUserPoly() {
 	var numTouches = sortedTouches.length;
 
@@ -108,7 +113,10 @@ function compareTouches(a, b) {
 	return (ax * ax + ay * ay) > (bx * bx + by * by);
 }
 
-function recenterTouches() {
+/**
+ * Sets `touchCenter` to average coordinates of `sortedTouches`.
+ */
+function setTouchesCenter() {
 	var avgX = 0;
 	var avgY = 0;
 	var numTouches = sortedTouches.length;
@@ -140,6 +148,12 @@ function recenterTouches() {
 	touchCenter.pageY = avgY;
 }
 
+/**
+ * Handles adding a touch.
+ *
+ * @param {Object} touch
+ * @param {Boolean} recenter Calls `setTouchesCenter` if anything but `false`.
+ */
 function addTouch(touch, recenter) {
 	var circle = r.circle(touch.pageX, touch.pageY, 20);
 	circle.attr({
@@ -151,13 +165,21 @@ function addTouch(touch, recenter) {
 	touchesById[touch.identifier] = touch;
 	sortedTouches.splice(0, 0, touch);
 	
-	if (recenter !== false) recenterTouches();
+	if (recenter !== false) setTouchesCenter();
 
 	sortedTouches.sort(compareTouches);
 
 	refreshUserPoly();
 }
 
+/**
+ * Handles removing a touch.
+ *
+ * @param {Integer} id Touch identifier.
+ * @param {Boolean} recenter Calls `setTouchesCenter` if anything but `false`.
+ *
+ * @return {Object} The removed touch.
+ */
 function removeTouch(id, recenter) {
 	for (var i = 0; i < sortedTouches.length; i++) {
 		if (sortedTouches[i].identifier === id) {
@@ -168,12 +190,17 @@ function removeTouch(id, recenter) {
 	var touch = touchesById[id];
 	touch.circle.remove();
 	delete touchesById[id];
-	if (recenter !== false) recenterTouches();
+	if (recenter !== false) setTouchesCenter();
 	refreshUserPoly();
 	
 	return touch;
 }
 
+/**
+ * Handles moving a touch.
+ *
+ * @param {Object} touch
+ */
 function moveTouch(touch) {
 	var oldTouch = touchesById[touch.identifier];
 		
@@ -225,15 +252,14 @@ function handleCancel(evt) {
 	}
 }
 
-var r;
 
 Raphael(function() {
 	r = Raphael(0, 0, '100%', '100%');
 
 	var el = r.canvas;
 
-	el.addEventListener("touchstart", handleStart, false);
-	el.addEventListener("touchend", handleEnd, false);
 	el.addEventListener("touchcancel", handleCancel, false);
-	el.addEventListener("touchmove", handleMove, false);
+	el.addEventListener('touchstart', handleStart, false);
+	el.addEventListener('touchend', handleEnd, false);
+	el.addEventListener('touchmove', handleMove, false);
 });
