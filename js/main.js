@@ -325,15 +325,18 @@ Raphael(function() {
 
 // Debug functions
 
-var debugTouchEvent;
+var debugTouchEvent = null;
 
 function debugRandomTouches() {
 	var x, y;
+	if (debugTouchEvent !== null) {
+		debugRemoveTouches();
+	}
 	debugTouchEvent = {
 		preventDefault: function(){},
 		changedTouches: []
 	};
-	for (var i = 0; i < Math.floor(Math.random() * 11); i++) {
+	for (var i = 0; i < Math.floor(Math.random() * 8) + 3; i++) {
 		x = Math.floor(Math.random() * 701);
 		y = Math.floor(Math.random() * 701);
 
@@ -349,4 +352,5 @@ function debugRandomTouches() {
 
 function debugRemoveTouches() {
 	handleEnd(debugTouchEvent);
+	debugTouchEvent = null;
 }
