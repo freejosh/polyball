@@ -13,10 +13,43 @@ undef: true
 */
 
 var r;
+var userPolySet;
 var touchesById = {};
 var sortedTouches = [];
 var touchCenter = { pageX: null, pageY: null };
 var userPoly = null;
+var lastTouchEnd = 0;
+
+/**
+ * Convert array of points to path string. Each point in array must be an object
+ * with coordinate elements of either `x` and `y` or `pageX` and `pageY`.
+ *
+ * @param {Array} points
+ *
+ * @return {String} Path string.
+ */
+function pointsToPath(points) {
+	var point;
+	var pathString = '';
+	for (var i = 0; i < points.length; i++) {
+		point = points[i];
+		
+		if (point.pageX === undefined || point.pageY === undefined) {
+			continue;
+		}
+
+		if (i === 0) {
+			pathString += 'M';
+		} else {
+			pathString += 'L';
+		}
+
+		pathString += point.pageX + ',' + point.pageY;
+	}
+	pathString += 'Z';
+
+	return pathString;
+}
 
 /**
  * Refreshes path, adds, or removes `userPoly` based on touches in
@@ -45,31 +78,7 @@ function refreshUserPoly() {
 		});
 	}
 
-	var pathString = '';
-	var touch;
-	var x;
-	var y;
-	for (var i = 0; i < numTouches; i++) {
-		touch = sortedTouches[i];
-		x = touch.pageX;
-		y = touch.pageY;
-
-		if (i === 0) {
-			pathString += 'M';
-		} else {
-			pathString += 'L';
-		}
-
-		pathString += x + ',' + y;
-	}
-	pathString += 'Z';
-
-	userPoly.attr('path', pathString);
-
-	console.log('');
-	for (i = 0; i < sortedTouches.length; i++) {
-		console.log(sortedTouches[i].identifier);
-	}
+	userPoly.attr('path', pointsToPath(sortedTouches));
 }
 
 /**
@@ -203,6 +212,7 @@ function removeTouch(id, recenter) {
  */
 function moveTouch(touch) {
 	var oldTouch = touchesById[touch.identifier];
+	if (oldTouch === undefined) return;
 		
 	touch.circle = oldTouch.circle;
 	touch.circle.attr({
@@ -237,29 +247,74 @@ function handleMove(evt) {
 function handleEnd(evt) {
 	evt.preventDefault();
 	var touches = evt.changedTouches;
+	var now = Date.now();
+	var touchRemoveThreshold = 500;
+	var path, center;
+	
+	if (userPoly && now - lastTouchEnd > touchRemoveThreshold) {
+		path = userPoly.attr('path');
+		center = {
+			pageX: touchCenter.pageX,
+			pageY: touchCenter.pageY
+		};
+
+		setTimeout(function() {
+			if (sortedTouches.length === 0) {
+				fillUserPoly(path, center);
+			}
+		}, touchRemoveThreshold);
+	}
 
 	for (var i = 0; i < touches.length; i++) {
 		removeTouch(touches[i].identifier);
 	}
+
+	lastTouchEnd = now;
 }
 
-function handleCancel(evt) {
-	evt.preventDefault();
-	var touches = evt.changedTouches;
+/**
+ * Animate polygon from center to full size.
+ *
+ * @param {String} path Ending shape.
+ * @param {Object} center Center of points.
+ * @param {Integer} center.x
+ * @param {Integer} center.y
+ */
+function fillUserPoly(path, center) {
+	var poly = r.path('M' + center.pageX + ',' + center.pageY);
+	userPolySet.push(poly);
+	poly
+		.data('filling', true)
+		.attr({
+			'stroke-width': 0,
+			fill: '#f00'
+		})
+		.animate({ path: path }, 1000, 'linear', solidifyUserPoly);
 
-	for (var i = 0; i < touches.length; i++) {
-		delete touchesById[touches[i].identifier];
-	}
+	// for debug until balls are bouncing to solidify
+	poly.touchstart(solidifyUserPoly);
 }
 
+/**
+ * Stop animation and mark poly as filled.
+ *
+ * @this {Element} Polygon element.
+ */
+function solidifyUserPoly() {
+	this
+		.stop()
+		.attr('fill', '#000')
+		.data('filling', false);
+}
 
 Raphael(function() {
 	r = Raphael(0, 0, '100%', '100%');
+	userPolySet = r.set();
 
 	var el = r.canvas;
 
-	el.addEventListener("touchcancel", handleCancel, false);
 	el.addEventListener('touchstart', handleStart, false);
 	el.addEventListener('touchend', handleEnd, false);
+	el.addEventListener('touchcancel', handleEnd, false);
 	el.addEventListener('touchmove', handleMove, false);
 });
