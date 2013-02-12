@@ -12,13 +12,14 @@ unused: true,
 undef: true
 */
 
-var r;
+var r = null;
 var userPolySet;
 var touchesById = {};
 var sortedTouches = [];
 var touchCenter = { pageX: null, pageY: null };
 var userPoly = null;
 var lastTouchEnd = 0;
+var canvas = null;
 
 /**
  * Convert array of points to path string. Each point in array must be an object
@@ -79,6 +80,31 @@ function refreshUserPoly() {
 	}
 
 	userPoly.attr('path', pointsToPath(sortedTouches));
+}
+
+/**
+ * Initializes game board by setting up the boundaries, etc.
+ */
+function initGameBoard(w, h) {
+	if (canvas === null) canvas = document.getElementById('canvas');
+
+	if (r !== null) r.remove();
+
+	r = Raphael(canvas, '100%', '100%');
+
+	r.rect(0, 0, 0, 0, 5)
+		.attr({
+			x: '50%',// can't set percent in `.rect` function
+			y: '50%',// can't set percent in `.rect` function
+			fill: '#fff'
+		})
+		.animate({
+			width: w,
+			height: h,
+			transform: 't' + (-w / 2) + ',' + (-h / 2)
+		}, 1000, 'easeInOut');
+
+	userPolySet = r.set();
 }
 
 /**
@@ -308,15 +334,12 @@ function solidifyUserPoly() {
 }
 
 Raphael(function() {
-	r = Raphael(0, 0, '100%', '100%');
-	userPolySet = r.set();
+	initGameBoard(800, 600);
 
-	var el = r.canvas;
-
-	el.addEventListener('touchstart', handleStart, false);
-	el.addEventListener('touchend', handleEnd, false);
-	el.addEventListener('touchcancel', handleEnd, false);
-	el.addEventListener('touchmove', handleMove, false);
+	canvas.addEventListener('touchstart', handleStart, false);
+	canvas.addEventListener('touchend', handleEnd, false);
+	canvas.addEventListener('touchcancel', handleEnd, false);
+	canvas.addEventListener('touchmove', handleMove, false);
 
 	// Debug buttons
 	document.getElementById('randomTouches').addEventListener('click', debugRandomTouches, false);
