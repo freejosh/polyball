@@ -96,6 +96,7 @@ function initGameBoard(w, h) {
 	var cy = window.innerHeight / 2;
 
 	r.rect(cx, cy, 0, 0, 5)
+		.toBack()
 		.attr({
 			fill: '#fff'
 		})
@@ -354,6 +355,8 @@ var debugTouchEvent = null;
 
 function debugRandomTouches() {
 	var x, y;
+	var board = r.bottom.getBBox();
+
 	if (debugTouchEvent !== null) {
 		debugRemoveTouches();
 	}
@@ -362,8 +365,8 @@ function debugRandomTouches() {
 		changedTouches: []
 	};
 	for (var i = 0; i < Math.floor(Math.random() * 8) + 3; i++) {
-		x = Math.floor(Math.random() * 701);
-		y = Math.floor(Math.random() * 701);
+		x = Math.floor(Math.random() * board.width) + board.x;
+		y = Math.floor(Math.random() * board.height) + board.y;
 
 		debugTouchEvent.changedTouches.push({
 			identifier: i + 100,
