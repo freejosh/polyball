@@ -13,7 +13,7 @@ undef: true
 */
 
 var r = null;
-var userPolySet;
+var userPolySet = null;
 var touchesById = {};
 var sortedTouches = [];
 var touchCenter = { pageX: null, pageY: null };
@@ -107,6 +107,7 @@ function initGameBoard(w, h) {
 			y: cy - h / 2
 		}, 1000, 'easeInOut');
 
+	if (userPolySet !== null) userPolySet.clear();
 	userPolySet = r.set();
 }
 
