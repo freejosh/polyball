@@ -92,16 +92,18 @@ function initGameBoard(w, h) {
 
 	r = Raphael(canvas, '100%', '100%');
 
-	r.rect(0, 0, 0, 0, 5)
+	var cx = window.innerWidth / 2;
+	var cy = window.innerHeight / 2;
+
+	r.rect(cx, cy, 0, 0, 5)
 		.attr({
-			x: '50%',// can't set percent in `.rect` function
-			y: '50%',// can't set percent in `.rect` function
 			fill: '#fff'
 		})
 		.animate({
 			width: w,
 			height: h,
-			transform: 't' + (-w / 2) + ',' + (-h / 2)
+			x: cx - w / 2,
+			y: cy - h / 2
 		}, 1000, 'easeInOut');
 
 	userPolySet = r.set();
