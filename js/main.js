@@ -149,7 +149,7 @@ function initGameBalls(numBalls) {
 	if (gameBalls !== null) gameBalls.clear();
 
 	gameBalls = r.set();
-	for (var i = 0; i <= numBalls; i++) {
+	for (var i = 0; i < numBalls; i++) {
 		cx = gameBoard.x + Math.floor(Math.random() * gameBoard.width);
 		cy = gameBoard.y + Math.floor(Math.random() * gameBoard.height);
 
@@ -160,8 +160,8 @@ function initGameBalls(numBalls) {
 				'stroke-width': 0
 			})
 			.data('m', 1)
-			.data('vx', Math.random() * 10 - 10)
-			.data('vy', Math.random() * 10 - 10)
+			.data('vx', Math.random() * 10 - 5)
+			.data('vy', Math.random() * 10 - 5)
 			.data('checkedBall', {})
 		);
 	}
