@@ -368,11 +368,11 @@ function addTouch(touch, recenter) {
 	touchesById[touch.identifier] = touch;
 	sortedTouches.splice(0, 0, touch);
 	
-	if (recenter !== false) setTouchesCenter();
-
+	if (recenter !== false) {
+		setTouchesCenter();
 	sortedTouches.sort(compareTouches);
-
 	refreshUserPoly();
+}
 }
 
 /**
@@ -393,8 +393,12 @@ function removeTouch(id, recenter) {
 	var touch = touchesById[id];
 	touch.circle.remove();
 	delete touchesById[id];
-	if (recenter !== false) setTouchesCenter();
+	
+	if (recenter !== false) {
+		setTouchesCenter();
+		sortedTouches.sort(compareTouches);
 	refreshUserPoly();
+	}
 	
 	return touch;
 }
