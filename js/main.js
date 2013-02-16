@@ -237,6 +237,54 @@ function animationLoop(t) {
 			ball2Checked[ball.id] = true;
 		});
 
+		// user polys
+		userPolySet.forEach(function(poly) {
+			var p1, p2, p1x, p1y, p2x, p2y, nx, ny, l, dp;
+			var path = poly.attr('path');
+
+			// rough check first - bounding box
+			if (!Raphael.isPointInsidePath(path, b1x, b1y)) return;
+
+			// if point inside bounding box check which line to bounce off of
+			for (var i = 0; i < path.length - 1; i++) {
+
+				p1 = path[i];
+				p2 = path[i + 1];
+
+				// get first point if second point should close loop
+				if (p2[0] === 'Z') p2 = path[0];
+
+				// only check line segments
+				if ((p1[0] !== 'L' && p1[0] !== 'M') || p2[0] !== 'L') continue;
+				
+				p1x = p1[1];
+				p1y = p1[2];
+				p2x = p2[1];
+				p2y = p2[2];
+
+				nx = p2y - p1y;
+				ny = p2x - p1x;
+
+				l = Math.sqrt((nx * nx) + (ny * ny));
+
+				// http://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line
+				var distToLine = Math.abs((b1x - p1x) * (p2y - p1y) - (b1y - p1y) * (p2x - p1x)) / l;
+
+				if (distToLine < b1r + 1) {
+
+					// http://math.stackexchange.com/questions/13261/how-to-get-a-reflection-vector
+					nx *= -1;
+					nx /= l;
+					ny /= l;
+
+					dp = b1vx * nx + b1vy * ny;
+
+					b1vx = b1vx - 2 * dp * nx;
+					b1vy = b1vy - 2 * dp * ny;
+				}
+			}
+		});
+
 		// walls
 		if (b1x - b1r <= boardBBox.x) {
 			// bounce off left
