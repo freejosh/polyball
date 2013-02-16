@@ -358,7 +358,7 @@ function setTouchesCenter() {
  * @param {Boolean} recenter Calls `setTouchesCenter` if anything but `false`.
  */
 function addTouch(touch, recenter) {
-	var circle = r.circle(touch.pageX, touch.pageY, 20);
+	var circle = r.circle(touch.pageX, touch.pageY, 50);
 	circle.attr({
 		'stroke-width': 0,
 		fill: 'black',
