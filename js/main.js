@@ -20,6 +20,35 @@ var touchCenter = { pageX: null, pageY: null };
 var userPoly = null;
 var lastTouchEnd = 0;
 var canvas = null;
+var gameBalls = null;
+
+// http://paulirish.com/2011/requestanimationframe-for-smart-animating/
+// http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
+// requestAnimationFrame polyfill by Erik Möller
+// fixes from Paul Irish and Tino Zijdel
+(function() {
+	var lastTime = 0;
+	var vendors = ['ms', 'moz', 'webkit', 'o'];
+	for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+		window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
+		window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame'] || window[vendors[x]+'CancelRequestAnimationFrame'];
+	}
+ 
+	if (!window.requestAnimationFrame)
+		window.requestAnimationFrame = function(callback) {
+			var currTime = new Date().getTime();
+			var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+			var id = window.setTimeout(function() { callback(currTime + timeToCall); },
+			  timeToCall);
+			lastTime = currTime + timeToCall;
+			return id;
+		};
+ 
+	if (!window.cancelAnimationFrame)
+		window.cancelAnimationFrame = function(id) {
+			clearTimeout(id);
+		};
+}());
 
 /**
  * Convert array of points to path string. Each point in array must be an object
@@ -105,10 +134,145 @@ function initGameBoard(w, h) {
 			height: h,
 			x: cx - w / 2,
 			y: cy - h / 2
-		}, 1000, 'easeInOut');
+		}, 1000, 'easeInOut', function() {
+			initGameBalls(Math.floor(Math.random() * 11));
+		});
 
 	if (userPolySet !== null) userPolySet.clear();
 	userPolySet = r.set();
+}
+
+function initGameBalls(numBalls) {
+	var gameBoard = r.bottom.getBBox();
+	var cx, cy;
+
+	if (gameBalls !== null) gameBalls.clear();
+
+	gameBalls = r.set();
+	for (var i = 0; i <= numBalls; i++) {
+		cx = gameBoard.x + Math.floor(Math.random() * gameBoard.width);
+		cy = gameBoard.y + Math.floor(Math.random() * gameBoard.height);
+
+		gameBalls.push(
+			r.circle(cx, cy, 10)
+			.attr({
+				fill: '#f00',
+				'stroke-width': 0
+			})
+			.data('m', 1)
+			.data('vx', Math.random() * 10 - 10)
+			.data('vy', Math.random() * 10 - 10)
+			.data('checkedBall', {})
+		);
+	}
+	
+	animationLoop();
+}
+
+function animationLoop(t) {
+	if (t === undefined) t = +Date.now();
+
+	var gameBoard = r.bottom;
+	var boardBBox = gameBoard.getBBox();
+
+	gameBalls.forEach(function(ball) {
+		// reset which other balls we've checked this one against
+		var ball1Checked = {};
+		ball1Checked[ball.id] = true;
+		ball.data('checkedBall', ball1Checked);
+
+		var b1x = ball.attr('cx');
+		var b1y = ball.attr('cy');
+		var b1r = ball.attr('r');
+		var b1m = ball.data('m');
+		var b1vx = ball.data('vx');
+		var b1vy = ball.data('vy');
+
+		// check against every other ball for a collision
+		gameBalls.forEach(function(ball2) {
+			var ball2Checked = ball2.data('checkedBall');
+			if (ball1Checked[ball2.id] || ball2Checked[ball.id]) return;
+
+			var b2x = ball2.attr('cx');
+			var b2y = ball2.attr('cy');
+			var b2r = ball2.attr('r');
+			var b2m = ball2.data('m');
+			var b2vx = ball2.data('vx');
+			var b2vy = ball2.data('vy');
+
+			// see http://compsci.ca/v3/viewtopic.php?t=14897 for circle collision tutorial
+			
+			var dx = b2x - b1x;
+			var dy = b2y - b1y;
+			var dvx = b1vx - b2vx;
+			var dvy = b1vy - b2vy;
+
+			// distance for collision to occur
+			var minDist = b1r + b2r + 1e-9;
+
+			// check that balls are moving toward each other and are minDist apart.
+			if (dx * dvx + dy * dvy > 0 && dx * dx + dy * dy <= minDist * minDist) {
+				// remove small epsilon from minDist for using it below
+				minDist -= 1e-9;
+
+				var nx = (b1x - b2x) / minDist;// x normal
+				var ny = (b1y - b2y) / minDist;// y normal
+
+				var a1 = b1vx * nx + b1vy * ny;// ball1 impulse
+				var a2 = b2vx * nx + b2vy * ny;// ball2 impulse
+				var p = 2 * (a1 - a2) / (b1m + b2m);// result impulse
+				
+				// new velocities
+				b1vx = b1vx - p * nx * b2m;
+				b1vy = b1vy - p * ny * b2m;
+				
+				b2vx = b2vx + p * nx * b1m;
+				b2vy = b2vy + p * ny * b1m;
+
+				ball2.data('vx', b2vx);
+				ball2.data('vy', b2vy);
+			}
+
+			ball1Checked[ball2.id] = true;
+			ball2Checked[ball.id] = true;
+		});
+
+		// walls
+		if (b1x - b1r <= boardBBox.x) {
+			// bounce off left
+			b1x = boardBBox.x + b1r;
+			b1vx *= -1;
+		}
+
+		if (b1x + b1r >= boardBBox.x + boardBBox.width) {
+			// bounce off right
+			b1x = boardBBox.x + boardBBox.width - b1r;
+			b1vx *= -1;
+		}
+
+		if (b1y - b1r <= boardBBox.y) {
+			b1y = boardBBox.y + b1r;
+			b1vy *= -1;
+		}
+
+		if (b1y + b1r >= boardBBox.y + boardBBox.height) {
+			b1y = boardBBox.y + boardBBox.height - b1r;
+			b1vy *= -1;
+		}
+
+		var x2 = b1x + b1vx;
+		var y2 = b1y + b1vy;
+
+		ball
+			.data('vx', b1vx)
+			.data('vy', b1vy)
+			.attr({
+				cx: x2,
+				cy: y2
+			});
+	});
+
+	window.requestAnimationFrame(animationLoop);
 }
 
 /**
