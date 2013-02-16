@@ -308,15 +308,12 @@ function animationLoop(t) {
 			b1vy *= -1;
 		}
 
-		var x2 = b1x + b1vx;
-		var y2 = b1y + b1vy;
-
 		ball
 			.data('vx', b1vx)
 			.data('vy', b1vy)
 			.attr({
-				cx: x2,
-				cy: y2
+				cx: b1x + b1vx,
+				cy: b1y + b1vy
 			});
 	});
 
