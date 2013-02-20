@@ -297,18 +297,22 @@ function animationLoop(t) {
 			if (!Raphael.isPointInsideBBox(growBBox(Raphael.pathBBox(path), b1r), b1x, b1y)) return;
 
 			// if point inside bounding box check which line to bounce off of
-			for (var i = 0; i < path.length - 1; i++) {
+			for (var i = 0; i < path.length; i++) {
 
 				p1 = path[i];
 				p2 = path[i + 1];
 
+				if (p1[0] === 'Z') continue;
+
 				// get first point if second point should close loop
-				if (p2[0] === 'Z') p2 = path[0];
+				if (p2 === undefined || p2[0] === 'Z') p2 = path[0];
 
 				p1x = p1[1];
 				p1y = p1[2];
 				p2x = p2[1];
 				p2y = p2[2];
+
+				if (p1x === p2x && p1y === p2y) continue;
 				
 				// check that ball is within bounding box of line segment
 				if (!Raphael.isPointInsideBBox({
