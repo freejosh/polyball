@@ -384,11 +384,13 @@ function animationLoop(t) {
 		}
 
 		if (b1y - b1r <= boardBBox.y) {
+			// bounce off top
 			b1y = boardBBox.y + b1r;
 			b1vy *= -1;
 		}
 
 		if (b1y + b1r >= boardBBox.y + boardBBox.height) {
+			// bounce off bottom
 			b1y = boardBBox.y + boardBBox.height - b1r;
 			b1vy *= -1;
 		}
