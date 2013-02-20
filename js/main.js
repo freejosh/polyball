@@ -482,6 +482,9 @@ function setTouchesCenter() {
  * @param {Boolean} recenter Calls `setTouchesCenter` if anything but `false`.
  */
 function addTouch(touch, recenter) {
+	touch.pageX |= 0;
+	touch.pageY |= 0;
+
 	var circle = r.circle(touch.pageX, touch.pageY, 50);
 	circle.attr({
 		'stroke-width': 0,
@@ -535,7 +538,9 @@ function removeTouch(id, recenter) {
 function moveTouch(touch) {
 	var oldTouch = touchesById[touch.identifier];
 	if (oldTouch === undefined) return;
-		
+	
+	touch.pageX |= 0;
+	touch.pageY |= 0;
 	touch.circle = oldTouch.circle;
 	touch.circle.attr({
 		cx: touch.pageX,
@@ -623,8 +628,22 @@ function fillUserPoly(path, center) {
  * @this {Element} Polygon element.
  */
 function solidifyUserPoly() {
+	var path = this.attr('path');
+	
+	// round coordinates to pixel
+	var p, i, j;
+	for (i = 0; i < path.length; i++) {
+		p = path[i];
+		for (j = 0; j < p.length; j++) {
+			if (typeof p[j] === 'number') {
+				p[j] = p[j] | 0;
+			}
+		}
+	}
+
 	this
 		.stop()
+		.attr('path', path)
 		.attr('fill', '#000')
 		.data('filling', false);
 }
