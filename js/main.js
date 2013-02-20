@@ -158,7 +158,7 @@ function initGameBoard(w, h) {
 			y: cy - h / 2
 		}, 1000, 'easeInOut', function() {
 			initGameBalls(Math.floor(Math.random() * 11));
-		});
+	});
 
 	if (userPolySet !== null) userPolySet.clear();
 	userPolySet = r.set();
@@ -309,7 +309,7 @@ function animationLoop(t) {
 				p1y = p1[2];
 				p2x = p2[1];
 				p2y = p2[2];
-
+				
 				// check that ball is within bounding box of line segment
 				if (!Raphael.isPointInsideBBox({
 					x: Math.min(p1x, p2x),
@@ -339,20 +339,20 @@ function animationLoop(t) {
 			}
 
 			if (closestLine !== undefined) {
-					// http://math.stackexchange.com/questions/13261/how-to-get-a-reflection-vector
+				// http://math.stackexchange.com/questions/13261/how-to-get-a-reflection-vector
 				nx = closestLine.p2y - closestLine.p1y;
 				ny = closestLine.p2x - closestLine.p1x;
 
 				l = Math.sqrt((nx * nx) + (ny * ny));
 
-					nx *= -1;
-					nx /= l;
-					ny /= l;
+				nx *= -1;
+				nx /= l;
+				ny /= l;
 
-					dp = b1vx * nx + b1vy * ny;
+				dp = b1vx * nx + b1vy * ny;
 
-					b1vx = b1vx - 2 * dp * nx;
-					b1vy = b1vy - 2 * dp * ny;
+				b1vx = b1vx - 2 * dp * nx;
+				b1vy = b1vy - 2 * dp * ny;
 
 				if (poly.data('filling')) {
 					solidifyUserPoly.call(poly);
@@ -494,9 +494,9 @@ function addTouch(touch, recenter) {
 	
 	if (recenter !== false) {
 		setTouchesCenter();
-	sortedTouches.sort(compareTouches);
-	refreshUserPoly();
-}
+		sortedTouches.sort(compareTouches);
+		refreshUserPoly();
+	}
 }
 
 /**
@@ -521,7 +521,7 @@ function removeTouch(id, recenter) {
 	if (recenter !== false) {
 		setTouchesCenter();
 		sortedTouches.sort(compareTouches);
-	refreshUserPoly();
+		refreshUserPoly();
 	}
 	
 	return touch;
