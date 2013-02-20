@@ -169,6 +169,21 @@ function initGameBalls(numBalls) {
 	animationLoop();
 }
 
+function moveBall(ball, x, y, vx, vy) {
+	x += vx;
+	y += vy;
+
+	ball
+		.data('vx', vx)
+		.data('vy', vy)
+		.data('cx', x)
+		.data('cy', y)
+		.attr({
+			cx: x | 0,
+			cy: y | 0
+		});
+}
+
 function animationLoop(t) {
 	if (t === undefined) t = +Date.now();
 
@@ -328,13 +343,7 @@ function animationLoop(t) {
 			b1vy *= -1;
 		}
 
-		ball
-			.data('vx', b1vx)
-			.data('vy', b1vy)
-			.attr({
-				cx: b1x + b1vx,
-				cy: b1y + b1vy
-			});
+		moveBall(ball, b1x, b1y, b1vx, b1vy);
 	});
 
 	window.requestAnimationFrame(animationLoop);
