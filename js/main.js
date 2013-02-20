@@ -81,6 +81,28 @@ function pointsToPath(points) {
 	return pathString;
 }
 
+function growBBox(bbox, top, right, bottom, left) {
+	if (top !== undefined && right === undefined && bottom === undefined && left === undefined) {
+		right = top;
+		bottom = top;
+		left = top;
+	} else if (top !== undefined && right !== undefined && bottom === undefined && left === undefined) {
+		bottom = top;
+		left = right;
+	} else if (top !== undefined && right !== undefined && bottom !== undefined && left === undefined) {
+		left = right;
+	}
+
+	bbox.x -= left;
+	bbox.y -= top;
+	bbox.x2 += right;
+	bbox.y2 += bottom;
+	bbox.width += right + left;
+	bbox.height += top + bottom;
+
+	return bbox;
+}
+
 /**
  * Refreshes path, adds, or removes `userPoly` based on touches in
  * `sortedTouches`.
@@ -150,8 +172,8 @@ function initGameBalls(numBalls) {
 
 	gameBalls = r.set();
 	for (var i = 0; i < numBalls; i++) {
-		cx = gameBoard.x + Math.floor(Math.random() * gameBoard.width);
-		cy = gameBoard.y + Math.floor(Math.random() * gameBoard.height);
+		cx = (gameBoard.x + Math.floor(Math.random() * gameBoard.width)) | 0;
+		cy = (gameBoard.y + Math.floor(Math.random() * gameBoard.height)) | 0;
 
 		gameBalls.push(
 			r.circle(cx, cy, 10)
@@ -162,6 +184,8 @@ function initGameBalls(numBalls) {
 			.data('m', 1)
 			.data('vx', Math.random() * 10 - 5)
 			.data('vy', Math.random() * 10 - 5)
+			.data('cx', cx)
+			.data('cy', cy)
 			.data('checkedBall', {})
 		);
 	}
@@ -192,12 +216,13 @@ function animationLoop(t) {
 
 	gameBalls.forEach(function(ball) {
 		// reset which other balls we've checked this one against
+		var ball1Collided = false;
 		var ball1Checked = {};
 		ball1Checked[ball.id] = true;
 		ball.data('checkedBall', ball1Checked);
 
-		var b1x = ball.attr('cx');
-		var b1y = ball.attr('cy');
+		var b1x = ball.data('cx');
+		var b1y = ball.data('cy');
 		var b1r = ball.attr('r');
 		var b1m = ball.data('m');
 		var b1vx = ball.data('vx');
@@ -208,8 +233,8 @@ function animationLoop(t) {
 			var ball2Checked = ball2.data('checkedBall');
 			if (ball1Checked[ball2.id] || ball2Checked[ball.id]) return;
 
-			var b2x = ball2.attr('cx');
-			var b2y = ball2.attr('cy');
+			var b2x = ball2.data('cx');
+			var b2y = ball2.data('cy');
 			var b2r = ball2.attr('r');
 			var b2m = ball2.data('m');
 			var b2vx = ball2.data('vx');
@@ -246,11 +271,22 @@ function animationLoop(t) {
 
 				ball2.data('vx', b2vx);
 				ball2.data('vy', b2vy);
+
+				// stop after colliding with another ball
+				// probably won't need to collide twice in one frame
+				ball1Collided = true;
+				return false;
 			}
 
 			ball1Checked[ball2.id] = true;
 			ball2Checked[ball.id] = true;
 		});
+
+		// if collided with ball don't need to check polys
+		if (ball1Collided) {
+			moveBall(ball, b1x, b1y, b1vx, b1vy);
+			return;
+		}
 
 		// user polys
 		userPolySet.forEach(function(poly) {
@@ -258,7 +294,7 @@ function animationLoop(t) {
 			var path = poly.attr('path');
 
 			// rough check first - bounding box
-			if (!Raphael.isPointInsideBBox(Raphael.pathBBox(path), b1x, b1y)) return;
+			if (!Raphael.isPointInsideBBox(growBBox(Raphael.pathBBox(path), b1r), b1x, b1y)) return;
 
 			// if point inside bounding box check which line to bounce off of
 			for (var i = 0; i < path.length - 1; i++) {
@@ -269,23 +305,30 @@ function animationLoop(t) {
 				// get first point if second point should close loop
 				if (p2[0] === 'Z') p2 = path[0];
 
-				// check that ball is within bounding box of line segment
-				if (!Raphael.isPointInsideBBox(Raphael.pathBBox([p1, p2]), b1x, b1y)) continue;
-				
 				p1x = p1[1];
 				p1y = p1[2];
 				p2x = p2[1];
 				p2y = p2[2];
 
+				// check that ball is within bounding box of line segment
+				if (!Raphael.isPointInsideBBox({
+					x: Math.min(p1x, p2x),
+					y: Math.min(p1y, p2y),
+					x2: Math.max(p1x, p2x),
+					y2: Math.max(p1y, p2y)
+				}, b1x, b1y)) continue;
+
 				nx = p2y - p1y;
 				ny = p2x - p1x;
 
-				l = Math.sqrt((nx * nx) + (ny * ny));
+				l = (nx * nx) + (ny * ny);
 
 				// http://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line
-				var distToLine = Math.abs((b1x - p1x) * (p2y - p1y) - (b1y - p1y) * (p2x - p1x)) / l;
+				var distToLine = (b1x - p1x) * (p2y - p1y) - (b1y - p1y) * (p2x - p1x);
+				distToLine *= distToLine;
+				distToLine /= l;
 
-				if (distToLine < b1r + 1e-9 && (closestLine === undefined || distToLine < closestLine.d)) {
+				if (distToLine < ((b1r + 1e-9) * (b1r + 1e-9)) && (closestLine === undefined || distToLine < closestLine.d)) {
 					closestLine = {};
 					closestLine.d = distToLine;
 					closestLine.p1x = p1x;
@@ -316,9 +359,16 @@ function animationLoop(t) {
 				}
 				
 				// stop looping through user poly set after one collision
+				ball1Collided = true;
 				return false;
 			}
 		});
+
+		// if collided with ball don't need to check polys
+		if (ball1Collided) {
+			moveBall(ball, b1x, b1y, b1vx, b1vy);
+			return;
+		}
 
 		// walls
 		if (b1x - b1r <= boardBBox.x) {
