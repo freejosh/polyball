@@ -432,18 +432,19 @@ function compareTouches(a, b) {
 	ay = ay - cy;
 	bx = bx - cx;
 	by = by - cy;
-
-	if (ax >= 0 && bx < 0) return 1;
-	if (ax === 0 && bx === 0) return ay > by ? 1 : 0;
+	
+	if (ax === bx && ay === by) return 0;
+	if (ax >= 0 && bx < 0) return -1;
+	if (ax === 0 && bx === 0) return ay > by ? -1 : 1;
 
 	// compute the cross product of vectors (center -> a) x (center -> b)
 	var det = ax * by - bx * ay;
-	if (det < 0) return 1;
-	if (det > 0) return 0;
+	if (det < 0) return -1;
+	if (det > 0) return 1;
 
 	// points a and b are on the same line from the center
 	// check which point is closer to the center
-	return (ax * ax + ay * ay) > (bx * bx + by * by) ? 1 : 0;
+	return (ax * ax + ay * ay) > (bx * bx + by * by) ? -1 : 1;
 }
 
 /**
