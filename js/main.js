@@ -21,6 +21,10 @@ var userPoly = null;
 var lastTouchEnd = 0;
 var canvas = null;
 var gameBalls = null;
+var fingerRadius = 30;
+var gamePaused = true;
+var userLevel = 0;
+var boardPercent = null;
 
 // http://paulirish.com/2011/requestanimationframe-for-smart-animating/
 // http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
@@ -133,18 +137,38 @@ function refreshUserPoly() {
 	userPoly.attr('path', pointsToPath(sortedTouches));
 }
 
+function resetGame() {
+	userLevel = 0;
+	nextLevel();
+}
+
 /**
  * Initializes game board by setting up the boundaries, etc.
  */
-function initGameBoard(w, h) {
-	if (canvas === null) canvas = document.getElementById('canvas');
-
-	if (r !== null) r.remove();
-
-	r = Raphael(canvas, '100%', '100%');
-
+function initGameBoard() {
+	var w = window.innerWidth - fingerRadius * 4;
+	var h = window.innerHeight - fingerRadius * 4;
 	var cx = window.innerWidth / 2;
 	var cy = window.innerHeight / 2;
+
+	if (userPolySet !== null) userPolySet.clear();
+	userPolySet = r.set();
+
+	var levelText = r.text(0, fingerRadius, 'Level ' + userLevel).attr({
+		fill: '#ffffff',
+		'text-anchor': 'start',
+		'font-family': 'Helvetica',
+		'font-size': fingerRadius * 2
+	});
+
+	console.log();
+
+	boardPercent = r.text(levelText.getBBox().width + fingerRadius * 2, fingerRadius, '0%').attr({
+		fill: '#ffffff',
+		'text-anchor': 'start',
+		'font-family': 'Helvetica',
+		'font-size': fingerRadius * 2
+	});
 
 	r.rect(cx, cy, 0, 0, 5)
 		.toBack()
@@ -157,11 +181,44 @@ function initGameBoard(w, h) {
 			x: cx - w / 2,
 			y: cy - h / 2
 		}, 1000, 'easeInOut', function() {
-			initGameBalls(Math.floor(Math.random() * 11));
-	});
+			gamePaused = false;
+			initGameBalls(userLevel);
+		});
+}
 
-	if (userPolySet !== null) userPolySet.clear();
-	userPolySet = r.set();
+function nextLevel() {
+	destroyGameBoard(function() {
+		userLevel++;
+		initGameBoard();
+	});
+}
+
+function destroyGameBoard(callback) {
+	var gameBoard = r.bottom;
+
+	gamePaused = true;
+	
+	if (gameBalls !== null) {
+		gameBalls.clear();
+	}
+
+	if (gameBoard === null) {
+		if (callback) callback();
+		return;
+	}
+
+	var cx = gameBoard.attr('x') + gameBoard.attr('width') / 2;
+	var cy = gameBoard.attr('y') + gameBoard.attr('height') / 2;
+
+	gameBoard.animate({
+		width: 0,
+		height: 0,
+		x: cx,
+		y: cy
+	}, 500, 'easeInOut', function() {
+		r.clear();
+		if (callback) callback();
+	});
 }
 
 function initGameBalls(numBalls) {
@@ -176,7 +233,7 @@ function initGameBalls(numBalls) {
 		cy = (gameBoard.y + Math.floor(Math.random() * gameBoard.height)) | 0;
 
 		gameBalls.push(
-			r.circle(cx, cy, 10)
+			r.circle(cx, cy, (fingerRadius / 3) | 0)
 			.attr({
 				fill: '#f00',
 				'stroke-width': 0
@@ -402,7 +459,9 @@ function animationLoop(t) {
 		moveBall(ball, b1x, b1y, b1vx, b1vy);
 	});
 
-	window.requestAnimationFrame(animationLoop);
+	if (!gamePaused) {
+		window.requestAnimationFrame(animationLoop);
+	}
 }
 
 /**
@@ -492,7 +551,7 @@ function addTouch(touch, recenter) {
 	touch.pageX |= 0;
 	touch.pageY |= 0;
 
-	var circle = r.circle(touch.pageX, touch.pageY, 50);
+	var circle = r.circle(touch.pageX, touch.pageY, fingerRadius);
 	circle.attr({
 		'stroke-width': 0,
 		fill: 'black',
@@ -656,7 +715,9 @@ function solidifyUserPoly() {
 }
 
 Raphael(function() {
-	initGameBoard(800, 600);
+	canvas = document.getElementById('canvas');
+	r = Raphael(canvas, '100%', '100%');
+	resetGame();
 
 	canvas.addEventListener('touchstart', handleStart, false);
 	canvas.addEventListener('touchend', handleEnd, false);
