@@ -233,7 +233,7 @@ function initGameBalls(numBalls) {
 		cy = (gameBoard.y + Math.floor(Math.random() * gameBoard.height)) | 0;
 
 		gameBalls.push(
-			r.circle(cx, cy, (fingerRadius / 3) | 0)
+			r.circle(cx, cy, ((gameBoard.width + gameBoard.height) / 140) | 0 )
 			.attr({
 				fill: '#f00',
 				'stroke-width': 0
