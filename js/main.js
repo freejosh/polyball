@@ -683,9 +683,6 @@ function fillUserPoly(path, center) {
 			fill: '#f00'
 		})
 		.animate({ path: path }, 1000, 'linear', solidifyUserPoly);
-
-	// for debug until balls are bouncing to solidify
-	poly.touchstart(solidifyUserPoly);
 }
 
 /**
