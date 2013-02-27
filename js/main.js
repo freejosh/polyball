@@ -25,6 +25,7 @@ var fingerRadius = 30;
 var gamePaused = true;
 var userLevel = 0;
 var boardPercent = null;
+var boardPercentText = null;
 
 // http://paulirish.com/2011/requestanimationframe-for-smart-animating/
 // http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
@@ -161,9 +162,8 @@ function initGameBoard() {
 		'font-size': fingerRadius * 2
 	});
 
-	console.log();
-
-	boardPercent = r.text(levelText.getBBox().width + fingerRadius * 2, fingerRadius, '0%').attr({
+	boardPercent = 0;
+	boardPercentText = r.text(levelText.getBBox().width + fingerRadius * 2, fingerRadius, boardPercent + '%').attr({
 		fill: '#ffffff',
 		'text-anchor': 'start',
 		'font-family': 'Helvetica',
