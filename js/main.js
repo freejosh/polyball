@@ -720,17 +720,17 @@ function solidifyUserPoly() {
 	var totalArea = 0;
 
 	userPolySet.forEach(function(poly1, i1) {
-		var path = poly1.attr('path');
+		var path1 = poly1.attr('path');
 
 		// calculate area of current user poly
 		var polyArea = 0;
 		var p1, p2;
 
-		for (i = 0; i < path.length; i++) {
-			p1 = path[i];
-			if (i === path.length - 1) p2 = path[0];
-			else p2 = path[i + 1];
-			if (p2[0] === 'Z') p2 = path[0];
+		for (i = 0; i < path1.length; i++) {
+			p1 = path1[i];
+			if (i === path1.length - 1) p2 = path1[0];
+			else p2 = path1[i + 1];
+			if (p2[0] === 'Z') p2 = path1[0];
 
 			polyArea += (p2[1] + p1[1]) * (p2[2] - p1[2]);
 		}
@@ -741,15 +741,17 @@ function solidifyUserPoly() {
 		userPolySet.forEach(function(poly2, i2) {
 			if (i2 <= i1) return;
 
+			var path2 = poly2.attr('path');
 			var intersection;
 			var intersectionArea = 0;
 			var intersectionPoints;
+			var point;
 
-			intersection = Raphael.pathIntersection(newPath, path);
+			intersection = Raphael.pathIntersection(path1, path2);
 
 			if (intersection.length > 0) {
 
-				intersectionPath = [];
+				intersectionPoints = [];
 
 				for (i = 0; i < intersection.length; i++) {
 					point = {};
