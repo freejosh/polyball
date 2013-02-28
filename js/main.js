@@ -152,7 +152,12 @@ function initGameBoard() {
 	var cx = window.innerWidth / 2;
 	var cy = window.innerHeight / 2;
 
-	if (userPolySet !== null) userPolySet.clear();
+	if (userPolySet !== null) {
+		userPolySet.forEach(function(poly) {
+			poly.remove();
+		});
+		userPolySet.clear();
+	}
 	userPolySet = r.set();
 
 	var levelText = r.text(0, fingerRadius, 'Level ' + userLevel).attr({
