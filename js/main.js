@@ -38,7 +38,7 @@ var boardPercentText = null;
 		window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
 		window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame'] || window[vendors[x]+'CancelRequestAnimationFrame'];
 	}
- 
+
 	if (!window.requestAnimationFrame)
 		window.requestAnimationFrame = function(callback) {
 			var currTime = new Date().getTime();
@@ -48,7 +48,7 @@ var boardPercentText = null;
 			lastTime = currTime + timeToCall;
 			return id;
 		};
- 
+
 	if (!window.cancelAnimationFrame)
 		window.cancelAnimationFrame = function(id) {
 			clearTimeout(id);
@@ -68,7 +68,7 @@ function pointsToPath(points) {
 	var pathString = '';
 	for (var i = 0; i < points.length; i++) {
 		point = points[i];
-		
+
 		if (point.pageX === undefined || point.pageY === undefined) {
 			continue;
 		}
@@ -202,7 +202,7 @@ function destroyGameBoard(callback) {
 	var gameBoard = r.bottom;
 
 	gamePaused = true;
-	
+
 	if (gameBalls !== null) {
 		gameBalls.clear();
 	}
@@ -251,7 +251,7 @@ function initGameBalls(numBalls) {
 			.data('checkedBall', {})
 		);
 	}
-	
+
 	animationLoop();
 }
 
@@ -303,7 +303,7 @@ function animationLoop(t) {
 			var b2vy = ball2.data('vy');
 
 			// see http://compsci.ca/v3/viewtopic.php?t=14897 for circle collision tutorial
-			
+
 			var dx = b2x - b1x;
 			var dy = b2y - b1y;
 			var dvx = b1vx - b2vx;
@@ -323,11 +323,11 @@ function animationLoop(t) {
 				var a1 = b1vx * nx + b1vy * ny;// ball1 impulse
 				var a2 = b2vx * nx + b2vy * ny;// ball2 impulse
 				var p = 2 * (a1 - a2) / (b1m + b2m);// result impulse
-				
+
 				// new velocities
 				b1vx = b1vx - p * nx * b2m;
 				b1vy = b1vy - p * ny * b2m;
-				
+
 				b2vx = b2vx + p * nx * b1m;
 				b2vy = b2vy + p * ny * b1m;
 
@@ -375,7 +375,7 @@ function animationLoop(t) {
 				p2y = p2[2];
 
 				if (p1x === p2x && p1y === p2y) continue;
-				
+
 				// check that ball is within bounding box of line segment
 				if (!Raphael.isPointInsideBBox({
 					x: Math.min(p1x, p2x),
@@ -423,7 +423,7 @@ function animationLoop(t) {
 				if (poly.data('filling')) {
 					solidifyUserPoly.call(poly);
 				}
-				
+
 				// stop looping through user poly set after one collision
 				ball1Collided = true;
 				return false;
@@ -496,7 +496,7 @@ function compareTouches(a, b) {
 	ay = ay - cy;
 	bx = bx - cx;
 	by = by - cy;
-	
+
 	if (ax === bx && ay === by) return 0;
 	if (ax >= 0 && bx < 0) return -1;
 	if (ax === 0 && bx === 0) return ay > by ? -1 : 1;
@@ -565,7 +565,7 @@ function addTouch(touch, recenter) {
 	touch.circle = circle;
 	touchesById[touch.identifier] = touch;
 	sortedTouches.splice(0, 0, touch);
-	
+
 	if (recenter !== false) {
 		setTouchesCenter();
 		sortedTouches.sort(compareTouches);
@@ -591,13 +591,13 @@ function removeTouch(id, recenter) {
 	var touch = touchesById[id];
 	touch.circle.remove();
 	delete touchesById[id];
-	
+
 	if (recenter !== false) {
 		setTouchesCenter();
 		sortedTouches.sort(compareTouches);
 		refreshUserPoly();
 	}
-	
+
 	return touch;
 }
 
@@ -609,7 +609,7 @@ function removeTouch(id, recenter) {
 function moveTouch(touch) {
 	var oldTouch = touchesById[touch.identifier];
 	if (oldTouch === undefined) return;
-	
+
 	touch.pageX |= 0;
 	touch.pageY |= 0;
 	touch.circle = oldTouch.circle;
@@ -623,7 +623,7 @@ function moveTouch(touch) {
 
 function handleStart(evt) {
 	evt.preventDefault();
-	
+
 	var touches = evt.changedTouches;
 	for (var i = 0; i < touches.length; i++) {
 		var touch = touches[i];
@@ -648,7 +648,7 @@ function handleEnd(evt) {
 	var now = Date.now();
 	var touchRemoveThreshold = 500;
 	var path, center;
-	
+
 	if (userPoly && now - lastTouchEnd > touchRemoveThreshold) {
 		path = userPoly.attr('path');
 		center = {
@@ -697,7 +697,7 @@ function fillUserPoly(path, center) {
  */
 function solidifyUserPoly() {
 	var path = this.attr('path');
-	
+
 	// round coordinates to pixel
 	var p, i, j;
 	for (i = 0; i < path.length; i++) {
@@ -721,7 +721,7 @@ function solidifyUserPoly() {
 
 	userPolySet.forEach(function(poly1, i1) {
 		var path = poly1.attr('path');
-		
+
 		// calculate area of current user poly
 		var polyArea = 0;
 		var p1, p2;
@@ -731,16 +731,16 @@ function solidifyUserPoly() {
 			if (i === path.length - 1) p2 = path[0];
 			else p2 = path[i + 1];
 			if (p2[0] === 'Z') p2 = path[0];
-	
+
 			polyArea += (p2[1] + p1[1]) * (p2[2] - p1[2]);
 		}
-		
+
 		polyArea /= 2;
-		
+
 		// for each other user poly that hasn't been compared subtract intersection area
 		userPolySet.forEach(function(poly2, i2) {
 			if (i2 <= i1) return;
-			
+
 			var intersection;
 			var intersectionArea = 0;
 			var intersectionPoints;
@@ -748,9 +748,9 @@ function solidifyUserPoly() {
 			intersection = Raphael.pathIntersection(newPath, path);
 
 			if (intersection.length > 0) {
-				
+
 				intersectionPath = [];
-				
+
 				for (i = 0; i < intersection.length; i++) {
 					point = {};
 					// TODO: build points array from intersection data.
@@ -758,12 +758,12 @@ function solidifyUserPoly() {
 					// and sorted with compareTouches then calc area
 					intersectionPoints.push(point);
 				}
-				
+
 				intersectionArea /= 2;
 				polyArea -= intersectionArea;
 			}
 		});
-		
+
 		totalArea += polyArea;
 	});
 
