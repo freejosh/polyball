@@ -715,82 +715,59 @@ function solidifyUserPoly() {
 		.attr('fill', '#000')
 		.data('filling', false);
 
+	var gameBoard = r.bottom;
+	var boardArea = gameBoard.attr('width') * gameBoard.attr('height');
+	var totalArea = 0;
 
-
-	// TODO: calculate area of userpoly set using http://www.mathopenref.com/coordpolygonarea.html
-	// find way to calculate total area of board covered without having to merge paths
-	// set boardPercent to number
-	//
-	// can't merge polys - sorting makes them convex when they shouldn't be
-	//
-	// calculate area of all polys, then subtract area of intersections
-
-	/*var newPath;
-	var newPoints = [];
-
-	console.log(this.attr('path'));
-
-	userPolySet.forEach(function(poly, p) {
-		var path = poly.attr('path');
-		var point, i, pp, lastPoint;
-
-		console.log(poly);
+	userPolySet.forEach(function(poly1, i1) {
+		var path = poly1.attr('path');
+		
+		// calculate area of current user poly
+		var polyArea = 0;
+		var p1, p2;
 
 		for (i = 0; i < path.length; i++) {
-			point = {};
-			pp = path[i];
-
-			if (pp[1] === undefined || pp[2] === undefined) continue;
-
-			// don't add identical points
-			// could happen when first point is M and second is C
-			if (lastPoint !== undefined && lastPoint.pageX === pp[1] && lastPoint.pageY === pp[2]) continue;
-
-			if (p > 0 && Raphael.isPointInsidePath(newPath, pp[1], pp[2])) continue;
-
-			point.pageX = pp[1];
-			point.pageY = pp[2];
-			lastPoint = point;
-			newPoints.push(point);
+			p1 = path[i];
+			if (i === path.length - 1) p2 = path[0];
+			else p2 = path[i + 1];
+			if (p2[0] === 'Z') p2 = path[0];
+	
+			polyArea += (p2[1] + p1[1]) * (p2[2] - p1[2]);
 		}
+		
+		polyArea /= 2;
+		
+		// for each other user poly that hasn't been compared subtract intersection area
+		userPolySet.forEach(function(poly2, i2) {
+			if (i2 <= i1) return;
+			
+			var intersection;
+			var intersectionArea = 0;
+			var intersectionPoints;
 
-		var intersection;
-
-		if (p !== 0) {
 			intersection = Raphael.pathIntersection(newPath, path);
 
 			if (intersection.length > 0) {
+				
+				intersectionPath = [];
+				
 				for (i = 0; i < intersection.length; i++) {
 					point = {};
-					point.pageX = intersection[i].x;
-					point.pageY = intersection[i].y;
-					newPoints.push(point);
+					// TODO: build points array from intersection data.
+					// should be array of objects with pageX/pageY
+					// and sorted with compareTouches then calc area
+					intersectionPoints.push(point);
 				}
+				
+				intersectionArea /= 2;
+				polyArea -= intersectionArea;
 			}
-		}
-
-		newPoints.sort(compareTouches);
-		newPath = pointsToPath(newPoints);
+		});
+		
+		totalArea += polyArea;
 	});
 
-	userPolySet.push(r.path(newPath));
-
-	var gameBoard = r.bottom;
-	var boardArea = gameBoard.attr('width') * gameBoard.attr('height');
-	var polyArea = 0;
-	var p1, p2;
-
-	for (i = 0; i < newPoints.length; i++) {
-		p1 = newPoints[i];
-		if (i === newPoints.length - 1) p2 = newPoints[0];
-		else p2 = newPoints[i + 1];
-
-		polyArea += (p2.pageX + p1.pageX) * (p2.pageY - p1.pageY);
-	}
-
-	polyArea /= 2;
-
-	boardPercent = Math.round(polyArea / boardArea * 10) / 10;*/
+	boardPercent = Math.round(totalArea / boardArea * 10) / 10;
 
 	boardPercentText.attr({
 		text: boardPercent + '%'
