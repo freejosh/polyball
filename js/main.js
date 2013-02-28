@@ -714,6 +714,92 @@ function solidifyUserPoly() {
 		.attr('path', path)
 		.attr('fill', '#000')
 		.data('filling', false);
+
+
+
+	// TODO: calculate area of userpoly set using http://www.mathopenref.com/coordpolygonarea.html
+	// find way to calculate total area of board covered without having to merge paths
+	// set boardPercent to number
+	//
+	// can't merge polys - sorting makes them convex when they shouldn't be
+	//
+	// calculate area of all polys, then subtract area of intersections
+
+	/*var newPath;
+	var newPoints = [];
+
+	console.log(this.attr('path'));
+
+	userPolySet.forEach(function(poly, p) {
+		var path = poly.attr('path');
+		var point, i, pp, lastPoint;
+
+		console.log(poly);
+
+		for (i = 0; i < path.length; i++) {
+			point = {};
+			pp = path[i];
+
+			if (pp[1] === undefined || pp[2] === undefined) continue;
+
+			// don't add identical points
+			// could happen when first point is M and second is C
+			if (lastPoint !== undefined && lastPoint.pageX === pp[1] && lastPoint.pageY === pp[2]) continue;
+
+			if (p > 0 && Raphael.isPointInsidePath(newPath, pp[1], pp[2])) continue;
+
+			point.pageX = pp[1];
+			point.pageY = pp[2];
+			lastPoint = point;
+			newPoints.push(point);
+		}
+
+		var intersection;
+
+		if (p !== 0) {
+			intersection = Raphael.pathIntersection(newPath, path);
+
+			if (intersection.length > 0) {
+				for (i = 0; i < intersection.length; i++) {
+					point = {};
+					point.pageX = intersection[i].x;
+					point.pageY = intersection[i].y;
+					newPoints.push(point);
+				}
+			}
+		}
+
+		newPoints.sort(compareTouches);
+		newPath = pointsToPath(newPoints);
+	});
+
+	userPolySet.push(r.path(newPath));
+
+	var gameBoard = r.bottom;
+	var boardArea = gameBoard.attr('width') * gameBoard.attr('height');
+	var polyArea = 0;
+	var p1, p2;
+
+	for (i = 0; i < newPoints.length; i++) {
+		p1 = newPoints[i];
+		if (i === newPoints.length - 1) p2 = newPoints[0];
+		else p2 = newPoints[i + 1];
+
+		polyArea += (p2.pageX + p1.pageX) * (p2.pageY - p1.pageY);
+	}
+
+	polyArea /= 2;
+
+	boardPercent = Math.round(polyArea / boardArea * 10) / 10;*/
+
+	boardPercentText.attr({
+		text: boardPercent + '%'
+	});
+
+	if (boardPercent > 70) {
+		nextLevel();
+		return;
+	}
 }
 
 Raphael(function() {
