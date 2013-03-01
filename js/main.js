@@ -840,8 +840,8 @@ Raphael(function() {
 	canvas.addEventListener('touchmove', handleMove, false);
 
 	// Debug buttons
-	document.getElementById('randomTouches').addEventListener('click', debugRandomTouches, false);
-	document.getElementById('removeTouches').addEventListener('click', debugRemoveTouches, false);
+	//document.getElementById('randomTouches').addEventListener('click', debugRandomTouches, false);
+	//document.getElementById('removeTouches').addEventListener('click', debugRemoveTouches, false);
 });
 
 // Debug functions
