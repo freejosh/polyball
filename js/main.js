@@ -22,10 +22,14 @@ var lastTouchEnd = 0;
 var canvas = null;
 var gameBalls = null;
 var fingerRadius = 30;
+var nextLevelPercent = 70;
 var gamePaused = true;
 var userLevel = 0;
 var boardPercent = null;
 var boardPercentText = null;
+var startingLives = 3;
+var userLives = startingLives;
+var userLivesSet = null;
 
 // http://paulirish.com/2011/requestanimationframe-for-smart-animating/
 // http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
@@ -152,13 +156,8 @@ function initGameBoard() {
 	var cx = window.innerWidth / 2;
 	var cy = window.innerHeight / 2;
 
-	if (userPolySet !== null) {
-		userPolySet.forEach(function(poly) {
-			poly.remove();
-		});
-		userPolySet.clear();
-	}
-	userPolySet = r.set();
+	if (userPolySet === null) userPolySet = r.set();
+	if (userLivesSet === null) userLivesSet = r.set();
 
 	var levelText = r.text(0, fingerRadius, 'Level ' + userLevel).attr({
 		fill: '#ffffff',
@@ -174,6 +173,13 @@ function initGameBoard() {
 		'font-family': 'Helvetica',
 		'font-size': fingerRadius * 2
 	});
+
+	for (var i = 0; i < userLives; i++) {
+		userLivesSet.push(r.circle(window.innerWidth - fingerRadius - fingerRadius * i * 2, fingerRadius, fingerRadius * 0.7).attr({
+			fill: '#f00',
+			'stroke-width': 0
+		}));
+	}
 
 	r.rect(cx, cy, 0, 0, 5)
 		.toBack()
@@ -194,6 +200,7 @@ function initGameBoard() {
 function nextLevel() {
 	destroyGameBoard(function() {
 		userLevel++;
+		userLives = startingLives;
 		initGameBoard();
 	});
 }
@@ -205,6 +212,14 @@ function destroyGameBoard(callback) {
 
 	if (gameBalls !== null) {
 		gameBalls.clear();
+	}
+
+	if (userLivesSet !== null) {
+		userLivesSet.clear();
+	}
+
+	if (userPolySet !== null) {
+		userPolySet.clear();
 	}
 
 	if (gameBoard === null) {
@@ -421,7 +436,13 @@ function animationLoop(t) {
 				b1vy = b1vy - 2 * dp * ny;
 
 				if (poly.data('filling')) {
+					userLives--;
+					userLivesSet.pop().remove();
 					solidifyUserPoly.call(poly);
+
+					if (userLives === 0) {
+						setTimeout(resetGame, 500);
+					}
 				}
 
 				// stop looping through user poly set after one collision
@@ -728,11 +749,12 @@ function solidifyUserPoly() {
 
 		for (i = 0; i < path1.length; i++) {
 			p1 = path1[i];
+			if (p1[0] === 'Z') continue;
 			if (i === path1.length - 1) p2 = path1[0];
 			else p2 = path1[i + 1];
 			if (p2[0] === 'Z') p2 = path1[0];
 
-			polyArea += (p2[1] + p1[1]) * (p2[2] - p1[2]);
+			polyArea += (p1[1] + p2[1]) * (p1[2] - p2[2]);
 		}
 
 		polyArea /= 2;
@@ -743,22 +765,40 @@ function solidifyUserPoly() {
 
 			var path2 = poly2.attr('path');
 			var intersection;
-			var intersectionArea = 0;
-			var intersectionPoints;
-			var point;
 
 			intersection = Raphael.pathIntersection(path1, path2);
 
 			if (intersection.length > 0) {
 
-				intersectionPoints = [];
+				var intersectionPoints = [];
 
 				for (i = 0; i < intersection.length; i++) {
-					point = {};
-					// TODO: build points array from intersection data.
-					// should be array of objects with pageX/pageY
-					// and sorted with compareTouches then calc area
-					intersectionPoints.push(point);
+					// intersection point is part of intersection path
+					intersectionPoints.push({
+						pageX: intersection[i].x | 0,
+						pageY: intersection[i].y | 0
+					});
+
+					// for each first and last set of points of bez1 and bez2,
+					// (bez*[0-1] and bez*[6-7]), check if they're inside the
+					// opposite path and add if so.
+					addIfInsidePath(intersectionPoints, path1, intersection[i].bez2[0], intersection[i].bez2[1]);
+					addIfInsidePath(intersectionPoints, path1, intersection[i].bez2[6], intersection[i].bez2[7]);
+					addIfInsidePath(intersectionPoints, path2, intersection[i].bez1[0], intersection[i].bez1[1]);
+					addIfInsidePath(intersectionPoints, path2, intersection[i].bez1[6], intersection[i].bez1[7]);
+				}
+
+				intersectionPoints.sort(compareTouches);
+
+				// calculate area of intersection
+				var intersectionArea = 0;
+
+				for (i = 0; i < intersectionPoints.length; i++) {
+					p1 = intersectionPoints[i];
+					if (i === intersectionPoints.length - 1) p2 = intersectionPoints[0];
+					else p2 = intersectionPoints[i + 1];
+
+					intersectionArea += (p2.pageX + p1.pageX) * (p2.pageY - p1.pageY);
 				}
 
 				intersectionArea /= 2;
@@ -769,15 +809,23 @@ function solidifyUserPoly() {
 		totalArea += polyArea;
 	});
 
-	boardPercent = Math.round(totalArea / boardArea * 10) / 10;
+	boardPercent = (totalArea / boardArea * 100) | 0;
 
 	boardPercentText.attr({
 		text: boardPercent + '%'
 	});
 
-	if (boardPercent > 70) {
-		nextLevel();
-		return;
+	if (boardPercent > nextLevelPercent) {
+		setTimeout(nextLevel, 1000);
+	}
+}
+
+function addIfInsidePath(arr, path, x, y) {
+	if (Raphael.isPointInsidePath(path, x, y)) {
+		arr.push({
+			pageX: x | 0,
+			pageY: y | 0
+		});
 	}
 }
 
