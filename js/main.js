@@ -151,31 +151,37 @@ function resetGame() {
  * Initializes game board by setting up the boundaries, etc.
  */
 function initGameBoard() {
-	var w = window.innerWidth - fingerRadius * 4;
-	var h = window.innerHeight - fingerRadius * 4;
+	var w = window.innerWidth;
+	var h = window.innerHeight;
+
+	var borderSize = (w + h) / 50;
+
+	w -= borderSize * 2;
+	h -= borderSize * 2;
+
 	var cx = window.innerWidth / 2;
 	var cy = window.innerHeight / 2;
 
 	if (userPolySet === null) userPolySet = r.set();
 	if (userLivesSet === null) userLivesSet = r.set();
 
-	var levelText = r.text(0, fingerRadius, 'Level ' + userLevel).attr({
+	var levelText = r.text(0, borderSize / 2 | 0, 'Level ' + userLevel).attr({
 		fill: '#ffffff',
 		'text-anchor': 'start',
 		'font-family': 'Helvetica',
-		'font-size': fingerRadius * 2
+		'font-size': borderSize
 	});
 
 	boardPercent = 0;
-	boardPercentText = r.text(levelText.getBBox().width + fingerRadius * 2, fingerRadius, boardPercent + '%').attr({
+	boardPercentText = r.text(levelText.getBBox().width + borderSize, borderSize / 2 | 0, boardPercent + '%').attr({
 		fill: '#ffffff',
 		'text-anchor': 'start',
 		'font-family': 'Helvetica',
-		'font-size': fingerRadius * 2
+		'font-size': borderSize
 	});
 
 	for (var i = 0; i < userLives; i++) {
-		userLivesSet.push(r.circle(window.innerWidth - fingerRadius - fingerRadius * i * 2, fingerRadius, fingerRadius * 0.7).attr({
+		userLivesSet.push(r.circle(window.innerWidth - (borderSize / 2 | 0) - borderSize * i, borderSize / 2 | 0, borderSize * 0.3).attr({
 			fill: '#f00',
 			'stroke-width': 0
 		}));
