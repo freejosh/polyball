@@ -844,42 +844,4 @@ Raphael(function() {
 	canvas.addEventListener('touchend', handleEnd, false);
 	canvas.addEventListener('touchcancel', handleEnd, false);
 	canvas.addEventListener('touchmove', handleMove, false);
-
-	// Debug buttons
-	//document.getElementById('randomTouches').addEventListener('click', debugRandomTouches, false);
-	//document.getElementById('removeTouches').addEventListener('click', debugRemoveTouches, false);
 });
-
-// Debug functions
-
-var debugTouchEvent = null;
-
-function debugRandomTouches() {
-	var x, y;
-	var board = r.bottom.getBBox();
-
-	if (debugTouchEvent !== null) {
-		debugRemoveTouches();
-	}
-	debugTouchEvent = {
-		preventDefault: function(){},
-		changedTouches: []
-	};
-	for (var i = 0; i < Math.floor(Math.random() * 8) + 3; i++) {
-		x = Math.floor(Math.random() * board.width) + board.x;
-		y = Math.floor(Math.random() * board.height) + board.y;
-
-		debugTouchEvent.changedTouches.push({
-			identifier: i + 100,
-			pageX: x,
-			pageY: y
-		});
-	}
-
-	handleStart(debugTouchEvent);
-}
-
-function debugRemoveTouches() {
-	handleEnd(debugTouchEvent);
-	debugTouchEvent = null;
-}
